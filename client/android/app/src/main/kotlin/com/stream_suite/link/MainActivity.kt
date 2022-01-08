@@ -1,4 +1,4 @@
-package com.stream_suite.client
+package com.stream_suite.link
 
 import io.flutter.embedding.android.FlutterActivity
 

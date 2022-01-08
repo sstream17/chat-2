@@ -1,115 +1,339 @@
-import 'package:flutter/material.dart';
+// Copyright 2019 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
 
-void main() {
-  runApp(const MyApp());
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+
+import 'firebase_options.dart';
+import 'message.dart';
+import 'message_list.dart';
+import 'permissions.dart';
+import 'token_monitor.dart';
+
+/// Define a top-level named handler which background/terminated messages will
+/// call.
+///
+/// To verify things are working, check out the native platform logs.
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // If you're going to use other Firebase services in the background, such as Firestore,
+  // make sure you call `initializeApp` before using other Firebase services.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print('Handling a background message ${message.messageId}');
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+/// Create a [AndroidNotificationChannel] for heads up notifications
+late AndroidNotificationChannel channel;
 
-  // This widget is the root of your application.
+/// Initialize the [FlutterLocalNotificationsPlugin] package.
+late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+/// Use --dart-define=VAR_NAME=value
+const firebaseFunctionUrl = String.fromEnvironment('FIREBASE_FUNCTION_URL', defaultValue: '');
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Set the background messaging handler early on, as a named top-level function
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  if (!kIsWeb) {
+    channel = const AndroidNotificationChannel(
+      'high_importance_channel', // id
+      'High Importance Notifications', // title
+      description: 'This channel is used for important notifications.',
+      // description
+      importance: Importance.high,
+    );
+
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+    /// Create an Android Notification Channel.
+    ///
+    /// We use this channel in the `AndroidManifest.xml` file to override the
+    /// default FCM channel to enable heads up notifications.
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    /// Update the iOS foreground notification presentation options to allow
+    /// heads up notifications.
+    await FirebaseMessaging.instance
+        .setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+  }
+
+  runApp(const MessagingExampleApp());
+}
+
+/// Entry point for the example application.
+class MessagingExampleApp extends StatelessWidget {
+  const MessagingExampleApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: 'Messaging Example App',
+      theme: ThemeData.dark(),
+      routes: {
+        '/': (context) => const Application(),
+        '/message': (context) => const MessageView(),
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+// Crude counter to make messages unique
+int _messageCount = 0;
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
+/// The API endpoint here accepts a raw FCM payload for demonstration purposes.
+String constructFCMPayload(String? token) {
+  _messageCount++;
+  return jsonEncode({
+    'token': token,
+    'sender': 'Spencer',
+    'content': 'Hey dude!',
+    'data': {
+      'via': 'FlutterFire Cloud Messaging!!!',
+      'count': _messageCount.toString(),
+    },
+    'notification': {
+      'title': 'Hello FlutterFire!',
+      'body': 'This notification (#$_messageCount) was created via FCM!',
+    },
+  });
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+/// Renders the example application.
+class Application extends StatefulWidget {
+  const Application({Key? key}) : super(key: key);
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  @override
+  State<StatefulWidget> createState() => _Application();
+}
+
+class _Application extends State<Application> {
+  String? _token;
+  final _textController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
+      if (message != null) {
+        Navigator.pushNamed(
+          context,
+          '/message',
+          arguments: MessageArguments(message, true),
+        );
+      }
     });
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+      if (notification != null && android != null && !kIsWeb) {
+        flutterLocalNotificationsPlugin.show(
+          notification.hashCode,
+          notification.title,
+          notification.body,
+          NotificationDetails(
+            android: AndroidNotificationDetails(
+              channel.id,
+              channel.name,
+              channelDescription: channel.description,
+              // TODO add a proper drawable resource to android, for now using
+              //      one that already exists in example app.
+              icon: 'launch_background',
+            ),
+          ),
+        );
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      print('A new onMessageOpenedApp event was published!');
+      Navigator.pushNamed(
+        context,
+        '/message',
+        arguments: MessageArguments(message, true),
+      );
+    });
+  }
+
+  Future<void> sendPushMessage() async {
+    if (_token == null) {
+      print('Unable to send FCM message, no token exists.');
+      return;
+    }
+
+    try {
+      await http.post(
+        Uri.parse(
+            '$firebaseFunctionUrl/sendMessage'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: constructFCMPayload(_token),
+      );
+      print('FCM request for device sent!');
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> onActionSelected(String value) async {
+    switch (value) {
+      case 'subscribe':
+        {
+          print(
+            'FlutterFire Messaging Example: Subscribing to topic "fcm_test".',
+          );
+          await FirebaseMessaging.instance.subscribeToTopic('fcm_test');
+          print(
+            'FlutterFire Messaging Example: Subscribing to topic "fcm_test" successful.',
+          );
+        }
+        break;
+      case 'unsubscribe':
+        {
+          print(
+            'FlutterFire Messaging Example: Unsubscribing from topic "fcm_test".',
+          );
+          await FirebaseMessaging.instance.unsubscribeFromTopic('fcm_test');
+          print(
+            'FlutterFire Messaging Example: Unsubscribing from topic "fcm_test" successful.',
+          );
+        }
+        break;
+      case 'get_apns_token':
+        {
+          if (defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS) {
+            print('FlutterFire Messaging Example: Getting APNs token...');
+            String? token = await FirebaseMessaging.instance.getAPNSToken();
+            print('FlutterFire Messaging Example: Got APNs token: $token');
+          } else {
+            print(
+              'FlutterFire Messaging Example: Getting an APNs token is only supported on iOS and macOS platforms.',
+            );
+          }
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Cloud Messaging'),
+        actions: <Widget>[
+          PopupMenuButton(
+            onSelected: onActionSelected,
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem(
+                  value: 'subscribe',
+                  child: Text('Subscribe to topic'),
+                ),
+                const PopupMenuItem(
+                  value: 'unsubscribe',
+                  child: Text('Unsubscribe to topic'),
+                ),
+                const PopupMenuItem(
+                  value: 'get_apns_token',
+                  child: Text('Get APNs token (Apple only)'),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      floatingActionButton: Builder(
+        builder: (context) => FloatingActionButton(
+          onPressed: sendPushMessage,
+          backgroundColor: Colors.white,
+          child: const Icon(Icons.send),
+        ),
+      ),
+      body: SingleChildScrollView(
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          children: [
+            const MetaCard('Permissions', Permissions()),
+            MetaCard(
+              'FCM Token',
+              TokenMonitor((token) {
+                return token == null
+                    ? const CircularProgressIndicator()
+                    : SelectableText(token,
+                        style: const TextStyle(fontSize: 12));
+              }),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            const MetaCard('Message Stream', MessageList()),
+            TextField(
+              controller: _textController,
+              onChanged: (token) {
+                _token = token;
+              },
+              onSubmitted: (_) {
+                sendPushMessage();
+              },
+              decoration:
+                  const InputDecoration.collapsed(hintText: 'FCM Token'),
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+}
+
+/// UI Widget for displaying metadata.
+class MetaCard extends StatelessWidget {
+  final String _title;
+  final Widget _children;
+
+  // ignore: public_member_api_docs
+  const MetaCard(this._title, this._children);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(left: 8, right: 8, top: 8),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Text(_title, style: const TextStyle(fontSize: 18)),
+              ),
+              _children,
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

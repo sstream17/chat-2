@@ -6,12 +6,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:link/login/login.dart';
 
 import 'firebase_options.dart';
 import 'message.dart';
@@ -66,6 +68,8 @@ late AndroidNotificationChannel channel = const AndroidNotificationChannel(
 /// Initialize the [FlutterLocalNotificationsPlugin] package.
 late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
+final FirebaseAuth _auth = FirebaseAuth.instance;
+
 /// Use --dart-define=VAR_NAME=value
 const firebaseFunctionUrl =
     String.fromEnvironment('FIREBASE_FUNCTION_URL', defaultValue: '');
@@ -75,6 +79,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
 
   // Set the background messaging handler early on, as a named top-level function
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -110,11 +116,13 @@ class MessagingExampleApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(_auth.currentUser);
     return MaterialApp(
       title: 'Messaging Example App',
       theme: ThemeData.dark(),
+      home:
+          _auth.currentUser == null ? const LoginRoute() : const Application(),
       routes: {
-        '/': (context) => const Application(),
         '/message': (context) => const MessageView(),
       },
     );
@@ -157,6 +165,7 @@ class _Application extends State<Application> {
   @override
   void initState() {
     super.initState();
+
     FirebaseMessaging.instance
         .getInitialMessage()
         .then((RemoteMessage? message) {

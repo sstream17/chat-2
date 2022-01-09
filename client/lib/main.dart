@@ -120,8 +120,7 @@ class MessagingExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Messaging Example App',
       theme: ThemeData.dark(),
-      home:
-          _auth.currentUser == null ? const LoginRoute() : const Application(),
+      home: const Application(),
       routes: {
         '/message': (context) => const MessageView(),
       },
@@ -259,67 +258,69 @@ class _Application extends State<Application> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cloud Messaging'),
-        actions: <Widget>[
-          PopupMenuButton(
-            onSelected: onActionSelected,
-            itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem(
-                  value: 'subscribe',
-                  child: Text('Subscribe to topic'),
+    return _auth.currentUser == null
+        ? const LoginRoute()
+        : Scaffold(
+            appBar: AppBar(
+              title: const Text('Cloud Messaging'),
+              actions: <Widget>[
+                PopupMenuButton(
+                  onSelected: onActionSelected,
+                  itemBuilder: (BuildContext context) {
+                    return [
+                      const PopupMenuItem(
+                        value: 'subscribe',
+                        child: Text('Subscribe to topic'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'unsubscribe',
+                        child: Text('Unsubscribe to topic'),
+                      ),
+                      const PopupMenuItem(
+                        value: 'get_apns_token',
+                        child: Text('Get APNs token (Apple only)'),
+                      ),
+                    ];
+                  },
                 ),
-                const PopupMenuItem(
-                  value: 'unsubscribe',
-                  child: Text('Unsubscribe to topic'),
-                ),
-                const PopupMenuItem(
-                  value: 'get_apns_token',
-                  child: Text('Get APNs token (Apple only)'),
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: Builder(
-        builder: (context) => FloatingActionButton(
-          onPressed: sendPushMessage,
-          backgroundColor: Colors.white,
-          child: const Icon(Icons.send),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const MetaCard('Permissions', Permissions()),
-            MetaCard(
-              'FCM Token',
-              TokenMonitor((token) {
-                return token == null
-                    ? const CircularProgressIndicator()
-                    : SelectableText(token,
-                        style: const TextStyle(fontSize: 12));
-              }),
+              ],
             ),
-            const MetaCard('Message Stream', MessageList()),
-            TextField(
-              controller: _textController,
-              onChanged: (token) {
-                _token = token;
-              },
-              onSubmitted: (_) {
-                sendPushMessage();
-              },
-              decoration:
-                  const InputDecoration.collapsed(hintText: 'FCM Token'),
-            )
-          ],
-        ),
-      ),
-    );
+            floatingActionButton: Builder(
+              builder: (context) => FloatingActionButton(
+                onPressed: sendPushMessage,
+                backgroundColor: Colors.white,
+                child: const Icon(Icons.send),
+              ),
+            ),
+            body: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const MetaCard('Permissions', Permissions()),
+                  MetaCard(
+                    'FCM Token',
+                    TokenMonitor((token) {
+                      return token == null
+                          ? const CircularProgressIndicator()
+                          : SelectableText(token,
+                              style: const TextStyle(fontSize: 12));
+                    }),
+                  ),
+                  const MetaCard('Message Stream', MessageList()),
+                  TextField(
+                    controller: _textController,
+                    onChanged: (token) {
+                      _token = token;
+                    },
+                    onSubmitted: (_) {
+                      sendPushMessage();
+                    },
+                    decoration:
+                        const InputDecoration.collapsed(hintText: 'FCM Token'),
+                  )
+                ],
+              ),
+            ),
+          );
   }
 }
 

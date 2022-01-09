@@ -10,18 +10,14 @@ export const sendMessage = functions.https.onRequest(async (request, response) =
     const body = request.body;
 
     const payload: messaging.MessagingPayload = {
-        notification: {
-            title: "You have a new message!",
-            body: `${body.sender} sent you a message.`
-        },
         data: {
             "sender": body.sender,
             "content": body.content
         }
     };
 
-    await messaging().sendToDevice(body.token, payload);
+    const messageResponse = await messaging().sendToDevice(body.token, payload);
 
-    functions.logger.info("Hello logs!", { structuredData: true });
+    functions.logger.info(messageResponse, { structuredData: true });
     response.send("Hello from Firebase!");
 });

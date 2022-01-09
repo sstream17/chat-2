@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -26,17 +27,48 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (!kIsWeb) {
+    showNotification(message);
+  }
   print('Handling a background message ${message.messageId}');
 }
 
+void showNotification(RemoteMessage message) {
+  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  flutterLocalNotificationsPlugin.show(
+    Random().nextInt(99999),
+    message.data.toString(),
+    message.sentTime.toString(),
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        channel.id,
+        channel.name,
+        channelDescription: channel.description,
+        // TODO add a proper drawable resource to android, for now using
+        //      one that already exists in example app.
+        icon: 'launch_background',
+      ),
+    ),
+  );
+}
+
 /// Create a [AndroidNotificationChannel] for heads up notifications
-late AndroidNotificationChannel channel;
+late AndroidNotificationChannel channel = const AndroidNotificationChannel(
+  'high_importance_channel', // id
+  'High Importance Notifications', // title
+  description: 'This channel is used for important notifications.',
+  // description
+  importance: Importance.high,
+);
 
 /// Initialize the [FlutterLocalNotificationsPlugin] package.
 late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
 /// Use --dart-define=VAR_NAME=value
-const firebaseFunctionUrl = String.fromEnvironment('FIREBASE_FUNCTION_URL', defaultValue: '');
+const firebaseFunctionUrl =
+    String.fromEnvironment('FIREBASE_FUNCTION_URL', defaultValue: '');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,14 +80,6 @@ Future<void> main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   if (!kIsWeb) {
-    channel = const AndroidNotificationChannel(
-      'high_importance_channel', // id
-      'High Importance Notifications', // title
-      description: 'This channel is used for important notifications.',
-      // description
-      importance: Importance.high,
-    );
-
     flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
     /// Create an Android Notification Channel.
@@ -106,7 +130,7 @@ String constructFCMPayload(String? token) {
   return jsonEncode({
     'token': token,
     'sender': 'Spencer',
-    'content': 'Hey dude!',
+    'content': 'Hey dude! ${DateTime.now()}',
     'data': {
       'via': 'FlutterFire Cloud Messaging!!!',
       'count': _messageCount.toString(),
@@ -146,24 +170,8 @@ class _Application extends State<Application> {
     });
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
-      if (notification != null && android != null && !kIsWeb) {
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel.id,
-              channel.name,
-              channelDescription: channel.description,
-              // TODO add a proper drawable resource to android, for now using
-              //      one that already exists in example app.
-              icon: 'launch_background',
-            ),
-          ),
-        );
+      if (!kIsWeb) {
+        showNotification(message);
       }
     });
 
@@ -185,8 +193,7 @@ class _Application extends State<Application> {
 
     try {
       await http.post(
-        Uri.parse(
-            '$firebaseFunctionUrl/sendMessage'),
+        Uri.parse('$firebaseFunctionUrl/sendMessage'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

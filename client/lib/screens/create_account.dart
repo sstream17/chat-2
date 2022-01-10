@@ -10,7 +10,7 @@ class CreateAccountScreen extends StatelessWidget {
         title: const Text("Create Account"),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,9 +53,12 @@ class CreateAccountScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32.0),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text("Create account"),
+            Hero(
+              tag: "create_account_button",
+              child: ElevatedButton(
+                onPressed: () {},
+                child: const Text("Create account"),
+              ),
             ),
           ],
         ),

@@ -1,20 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:link/state/user.dart';
 
-final _auth = FirebaseAuth.instance;
-
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Home"),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          await _auth.signOut();
+          await ref.read(userProvider.notifier).signOut();
           Navigator.pushReplacementNamed(context, "/");
         },
         label: const Text("Logout"),

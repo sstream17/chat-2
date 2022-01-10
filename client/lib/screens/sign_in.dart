@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:link/state/user.dart';
 
 import '../state/login.dart';
 
@@ -60,10 +61,17 @@ class SignInScreen extends ConsumerWidget {
                 onPressed: !isEmailValid
                     ? null
                     : () async {
-                        await _auth.signInWithEmailAndPassword(
-                          email: emailController.text,
-                          password: _passwordController.text,
-                        );
+                        var loginSuccess =
+                            await ref.read(userProvider.notifier).signIn(
+                                  emailController.text,
+                                  _passwordController.text,
+                                );
+
+                        if (!loginSuccess) {
+                          print("Invalid credentials");
+                          return;
+                        }
+
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           "/",

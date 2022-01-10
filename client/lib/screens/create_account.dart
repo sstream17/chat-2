@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CreateAccountScreen extends StatelessWidget {
+import '../state/login.dart';
+
+class CreateAccountScreen extends ConsumerWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TextEditingController emailController = ref.watch(emailProvider);
+    final EmailValidNotifier emailValidator =
+        ref.read(emailValidatorProvider.notifier);
+    final bool isEmailValid = ref.watch(emailValidatorProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Create Account"),
@@ -15,8 +23,12 @@ class CreateAccountScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: emailController,
+              onChanged: (text) {
+                emailValidator.validate(text);
+              },
+              decoration: const InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(),
               ),
@@ -56,7 +68,7 @@ class CreateAccountScreen extends StatelessWidget {
             Hero(
               tag: "create_account_button",
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: !isEmailValid ? null : () {},
                 child: const Text("Create account"),
               ),
             ),

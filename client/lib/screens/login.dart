@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoginScreen extends StatelessWidget {
+import '../state/login.dart';
+
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TextEditingController emailController = ref.watch(emailProvider);
+    final EmailValidNotifier emailValidator =
+        ref.read(emailValidatorProvider.notifier);
+    final bool isEmailValid = ref.watch(emailValidatorProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Login"),
@@ -15,8 +23,12 @@ class LoginScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: emailController,
+              onChanged: (text) {
+                emailValidator.validate(text);
+              },
+              decoration: const InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(),
               ),
@@ -25,9 +37,11 @@ class LoginScreen extends StatelessWidget {
             Hero(
               tag: "sign_in_button",
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, "/login/signIn");
-                },
+                onPressed: !isEmailValid
+                    ? null
+                    : () {
+                        Navigator.pushNamed(context, "/login/signIn");
+                      },
                 child: const Text("Sign in"),
               ),
             ),
@@ -37,9 +51,11 @@ class LoginScreen extends StatelessWidget {
             Hero(
               tag: "create_account_button",
               child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, "/login/createAccount");
-                },
+                onPressed: !isEmailValid
+                    ? null
+                    : () {
+                        Navigator.pushNamed(context, "/login/createAccount");
+                      },
                 child: const Text("Create account"),
               ),
             ),

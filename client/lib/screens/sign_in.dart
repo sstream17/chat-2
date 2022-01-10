@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SignInScreen extends StatelessWidget {
+import '../state/login.dart';
+
+class SignInScreen extends ConsumerWidget {
   const SignInScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TextEditingController emailController = ref.watch(emailProvider);
+    final EmailValidNotifier emailValidator =
+        ref.read(emailValidatorProvider.notifier);
+    final bool isEmailValid = ref.watch(emailValidatorProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Sign In"),
@@ -15,8 +23,12 @@ class SignInScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const TextField(
-              decoration: InputDecoration(
+            TextField(
+              controller: emailController,
+              onChanged: (text) {
+                emailValidator.validate(text);
+              },
+              decoration: const InputDecoration(
                 labelText: "Email",
                 border: OutlineInputBorder(),
               ),
@@ -37,7 +49,7 @@ class SignInScreen extends StatelessWidget {
             Hero(
               tag: "sign_in_button",
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: !isEmailValid ? null : () {},
                 child: const Text("Sign in"),
               ),
             ),

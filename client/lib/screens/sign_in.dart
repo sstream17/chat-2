@@ -1,11 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:link/state/user.dart';
 
 import '../state/login.dart';
-
-final _auth = FirebaseAuth.instance;
 
 class SignInScreen extends ConsumerWidget {
   const SignInScreen({Key? key}) : super(key: key);

@@ -9,6 +9,38 @@ class SignInScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Sign In"),
       ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const TextField(
+              decoration: InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            TextField(
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Password",
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.visibility),
+                  onPressed: () {},
+                ),
+              ),
+            ),
+            const SizedBox(height: 32.0),
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text("Sign in"),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/login.dart';
+
+final _auth = FirebaseAuth.instance;
 
 class SignInScreen extends ConsumerWidget {
   const SignInScreen({Key? key}) : super(key: key);
@@ -12,6 +15,10 @@ class SignInScreen extends ConsumerWidget {
     final EmailValidNotifier emailValidator =
         ref.read(emailValidatorProvider.notifier);
     final bool isEmailValid = ref.watch(emailValidatorProvider);
+
+    // No password input validation needed when signing in
+    // Additionally, its TextEditingController doesn't need to be exposed
+    final TextEditingController _passwordController = TextEditingController();
 
     return Scaffold(
       appBar: AppBar(
@@ -36,6 +43,7 @@ class SignInScreen extends ConsumerWidget {
             const SizedBox(height: 16.0),
             TextField(
               obscureText: true,
+              controller: _passwordController,
               decoration: InputDecoration(
                 labelText: "Password",
                 border: const OutlineInputBorder(),
@@ -49,7 +57,19 @@ class SignInScreen extends ConsumerWidget {
             Hero(
               tag: "sign_in_button",
               child: ElevatedButton(
-                onPressed: !isEmailValid ? null : () {},
+                onPressed: !isEmailValid
+                    ? null
+                    : () async {
+                        await _auth.signInWithEmailAndPassword(
+                          email: emailController.text,
+                          password: _passwordController.text,
+                        );
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          "/",
+                          (_) => false,
+                        );
+                      },
                 child: const Text("Sign in"),
               ),
             ),

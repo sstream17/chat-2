@@ -1,9 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+final _auth = FirebaseAuth.instance;
 
-  const HomeScreen({Key? key})
-      : super(key: key);
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +13,12 @@ class HomeScreen extends StatelessWidget {
         title: const Text("Home"),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.pushNamed(context, '/login');
+        onPressed: () async {
+          await _auth.signOut();
+          Navigator.pushReplacementNamed(context, "/");
         },
-        label: const Text("Login"),
-        icon: const Icon(Icons.login),
+        label: const Text("Logout"),
+        icon: const Icon(Icons.logout),
       ),
     );
   }

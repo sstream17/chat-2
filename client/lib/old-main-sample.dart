@@ -13,7 +13,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
-import 'package:link/login/login.dart';
 
 import 'firebase_options.dart';
 import 'message.dart';
@@ -259,7 +258,7 @@ class _Application extends State<Application> {
   @override
   Widget build(BuildContext context) {
     return _auth.currentUser == null
-        ? const LoginRoute()
+        ? const Text("Login")
         : Scaffold(
       appBar: AppBar(
         title: const Text('Cloud Messaging'),

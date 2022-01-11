@@ -25,6 +25,13 @@ class ThemedOutlinedButton extends OutlinedButton {
           child: child,
         );
 
+  /// Defines the button's default appearance.
+  ///
+  /// With the exception of [ButtonStyle.side], which defines the
+  /// outline, the returned style is the same as for [OutlinedButton].
+  ///
+  /// The [ButtonStyle.side] is rendered with
+  /// the [ButtonStyle]'s foreground color.
   @override
   ButtonStyle defaultStyleOf(BuildContext context) {
     final ThemeData theme = Theme.of(context);

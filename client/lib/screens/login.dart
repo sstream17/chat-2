@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/login.dart';
+import '../widgets/themed_outline_button.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -51,7 +52,7 @@ class LoginScreen extends ConsumerWidget {
               const SizedBox(height: 8.0),
               Hero(
                 tag: "create_account_button",
-                child: OutlinedButton(
+                child: ThemedOutlinedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
                       Navigator.pushNamed(context, "/login/createAccount");

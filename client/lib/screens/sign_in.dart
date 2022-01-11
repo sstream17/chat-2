@@ -31,7 +31,6 @@ class SignInScreen extends ConsumerWidget {
             children: [
               TextFormField(
                 controller: emailController,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
                 validator: (text) {
                   return validateEmail(text);
                 },

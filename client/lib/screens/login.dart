@@ -9,9 +9,8 @@ class LoginScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final TextEditingController emailController = ref.watch(emailProvider);
-    final EmailValidNotifier emailValidator =
-        ref.read(emailValidatorProvider.notifier);
-    final bool isEmailValid = ref.watch(emailValidatorProvider);
+
+    final _formKey = GlobalKey<FormState>();
 
     return Scaffold(
       appBar: AppBar(
@@ -19,47 +18,51 @@ class LoginScreen extends ConsumerWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextField(
-              controller: emailController,
-              onChanged: (text) {
-                emailValidator.validate(text);
-              },
-              decoration: const InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextFormField(
+                controller: emailController,
+                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validator: (text) {
+                  return validateEmail(text);
+                },
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 32.0),
-            Hero(
-              tag: "sign_in_button",
-              child: ElevatedButton(
-                onPressed: !isEmailValid
-                    ? null
-                    : () {
-                        Navigator.pushNamed(context, "/login/signIn");
-                      },
-                child: const Text("Sign in"),
+              const SizedBox(height: 32.0),
+              Hero(
+                tag: "sign_in_button",
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      Navigator.pushNamed(context, "/login/signIn");
+                    }
+                  },
+                  child: const Text("Sign in"),
+                ),
               ),
-            ),
-            const SizedBox(height: 8.0),
-            const Center(child: Text("or")),
-            const SizedBox(height: 8.0),
-            Hero(
-              tag: "create_account_button",
-              child: OutlinedButton(
-                onPressed: !isEmailValid
-                    ? null
-                    : () {
-                        Navigator.pushNamed(context, "/login/createAccount");
-                      },
-                child: const Text("Create account"),
+              const SizedBox(height: 8.0),
+              const Center(child: Text("or")),
+              const SizedBox(height: 8.0),
+              Hero(
+                tag: "create_account_button",
+                child: OutlinedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      Navigator.pushNamed(context, "/login/createAccount");
+                    }
+                  },
+                  child: const Text("Create account"),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

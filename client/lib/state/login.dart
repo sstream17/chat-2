@@ -4,17 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final emailValidationRegex = RegExp(r"^(.+)@(.+)$");
 
 final emailProvider = StateProvider.autoDispose<TextEditingController>(
-        (ref) => TextEditingController());
+    (ref) => TextEditingController());
 
-final emailValidatorProvider =
-StateNotifierProvider.autoDispose<EmailValidNotifier, bool>((ref) {
-  return EmailValidNotifier();
-});
+String? validateEmail(String? email) {
+  var _isValid = false;
 
-class EmailValidNotifier extends StateNotifier<bool> {
-  EmailValidNotifier() : super(false);
-
-  void validate(String email) {
-    state = emailValidationRegex.hasMatch(email);
+  if (email != null) {
+    _isValid = emailValidationRegex.hasMatch(email);
   }
+
+  return _isValid ? null : "Please enter a valid email address";
 }

@@ -4,12 +4,17 @@ import 'package:link/state/user.dart';
 
 import '../state/login.dart';
 
+final _signInErrorMessageProvider = StateProvider<String?>((ref) {
+  return null;
+});
+
 class SignInScreen extends ConsumerWidget {
   const SignInScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final TextEditingController emailController = ref.watch(emailProvider);
+    String? signInErrorMessage = ref.watch(_signInErrorMessageProvider);
 
     // No password input validation needed when signing in
     // Additionally, its TextEditingController doesn't need to be exposed
@@ -34,6 +39,9 @@ class SignInScreen extends ConsumerWidget {
                 validator: (text) {
                   return validateEmail(text);
                 },
+                onChanged: (_) {
+                  ref.read(_signInErrorMessageProvider.state).state = null;
+                },
                 decoration: const InputDecoration(
                   labelText: "Email",
                   border: OutlineInputBorder(),
@@ -43,6 +51,9 @@ class SignInScreen extends ConsumerWidget {
               TextField(
                 obscureText: true,
                 controller: _passwordController,
+                onChanged: (_) {
+                  ref.read(_signInErrorMessageProvider.state).state = null;
+                },
                 decoration: InputDecoration(
                   labelText: "Password",
                   border: const OutlineInputBorder(),
@@ -52,20 +63,34 @@ class SignInScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+              if (signInErrorMessage != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16.0),
+                    Text(
+                      signInErrorMessage,
+                      style:
+                          TextStyle(color: Theme.of(context).colorScheme.error),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 32.0),
               Hero(
                 tag: "sign_in_button",
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      var loginSuccess =
+                      var loginErrorMessage =
                           await ref.read(userProvider.notifier).signIn(
                                 emailController.text,
                                 _passwordController.text,
                               );
 
-                      if (!loginSuccess) {
+                      if (loginErrorMessage != null) {
                         print("Invalid credentials");
+                        ref.read(_signInErrorMessageProvider.state).state =
+                            loginErrorMessage;
                         return;
                       }
 

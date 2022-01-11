@@ -12,7 +12,7 @@ final userProvider = StateNotifierProvider<UserNotifier, link_user.User>((ref) {
 class UserNotifier extends StateNotifier<link_user.User> {
   UserNotifier() : super(link_user.User(null, null, null));
 
-  Future<bool> signIn(String email, String password) async {
+  Future<String?> signIn(String email, String password) async {
     try {
       var userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
@@ -28,13 +28,20 @@ class UserNotifier extends StateNotifier<link_user.User> {
           user.displayName,
         );
 
-        return true;
+        return null;
       }
-    } catch (e) {
-      return false;
+    } on FirebaseAuthException catch (e) {
+      print("Firebase Auth Error:\n\t${e.code}\n\t${e.message}");
+      switch (e.code) {
+        case "invalid-email":
+        case "user-not-found":
+        case "wrong-password":
+          return "Your email or password was incorrect";
+      }
+      return "We were unable to sign you in, please try again later";
     }
 
-    return false;
+    return "We were unable to sign you in, please try again later";
   }
 
   Future<void> signOut() async {

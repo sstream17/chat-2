@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../state/login.dart';
+import '../state/user.dart';
 
 class CreateAccountScreen extends ConsumerWidget {
   const CreateAccountScreen({Key? key}) : super(key: key);
@@ -9,6 +10,11 @@ class CreateAccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final TextEditingController emailController = ref.watch(emailProvider);
+
+    final TextEditingController _usernameController = TextEditingController();
+    final TextEditingController _passwordController = TextEditingController();
+    final TextEditingController _confirmPasswordController =
+        TextEditingController();
 
     final _formKey = GlobalKey<FormState>();
 
@@ -35,8 +41,9 @@ class CreateAccountScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16.0),
-              const TextField(
-                decoration: InputDecoration(
+              TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
                   labelText: "Username",
                   border: OutlineInputBorder(),
                 ),
@@ -44,6 +51,7 @@ class CreateAccountScreen extends ConsumerWidget {
               const SizedBox(height: 16.0),
               TextField(
                 obscureText: true,
+                controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: "New password",
                   border: const OutlineInputBorder(),
@@ -56,6 +64,7 @@ class CreateAccountScreen extends ConsumerWidget {
               const SizedBox(height: 16.0),
               TextField(
                 obscureText: true,
+                controller: _confirmPasswordController,
                 decoration: InputDecoration(
                   labelText: "Confirm password",
                   border: const OutlineInputBorder(),
@@ -69,7 +78,27 @@ class CreateAccountScreen extends ConsumerWidget {
               Hero(
                 tag: "create_account_button",
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      var createAccountErrorMessage =
+                          await ref.read(userProvider.notifier).createAccount(
+                                emailController.text,
+                                _passwordController.text,
+                                _usernameController.text,
+                              );
+
+                      if (createAccountErrorMessage != null) {
+                        print("Unable to create account");
+                        return;
+                      }
+
+                      Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        "/",
+                        (_) => false,
+                      );
+                    }
+                  },
                   child: const Text("Create account"),
                 ),
               ),

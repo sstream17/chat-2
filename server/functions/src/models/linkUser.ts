@@ -5,14 +5,17 @@ type LinkUserArgs = {
 }
 
 export class LinkUser {
+
     /**
      * The user's primary email, if set.
      */
     email: string;
+
     /**
      * The user's display name.
      */
     username: string;
+
     /**
      * The user's firebase `uid`.
      */

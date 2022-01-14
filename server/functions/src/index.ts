@@ -19,6 +19,7 @@ export const sendMessage = functions.https.onRequest(async (request, response) =
         data: {
             'sender': body.sender,
             'content': body.content,
+            'type': body.type,
         },
     };
 

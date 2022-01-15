@@ -68,6 +68,12 @@ class HomeScreen extends ConsumerWidget {
               sendPushMessage(_token);
             },
             decoration: const InputDecoration.collapsed(hintText: 'FCM Token'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, "/friends");
+            },
+            child: const Text("Friends"),
           )
         ],
       ),

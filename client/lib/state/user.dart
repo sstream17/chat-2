@@ -17,7 +17,7 @@ final userProvider = StateNotifierProvider<UserNotifier, link_user.User>((ref) {
 });
 
 class UserNotifier extends StateNotifier<link_user.User> {
-  UserNotifier() : super(link_user.User(null, null, null));
+  UserNotifier() : super(link_user.User());
 
   Future<String?> createAccount(
     String email,
@@ -60,9 +60,9 @@ class UserNotifier extends StateNotifier<link_user.User> {
 
       if (user != null) {
         state = link_user.User(
-          user.uid,
-          user.email,
-          user.displayName,
+          id: user.uid,
+          email: user.email,
+          username: user.displayName,
         );
 
         return null;

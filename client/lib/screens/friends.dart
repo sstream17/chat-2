@@ -57,9 +57,18 @@ class _FriendsBody extends ConsumerWidget {
         style: const TextStyle(fontSize: 18.0),
       ),
       trailing: isRequest
-          ? IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.person_add),
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.person_add),
+                ),
+                IconButton(
+                  onPressed: () {},
+                  icon: const Icon(Icons.cancel_rounded),
+                ),
+              ],
             )
           : null,
     );

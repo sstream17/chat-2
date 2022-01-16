@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:link/screens/friends.dart';
 import 'package:link/screens/screens.dart';
 
 import 'firebase_options.dart';
@@ -74,6 +73,7 @@ class MyApp extends StatelessWidget {
         '/login/signIn': (context) => const SignInScreen(),
         '/login/createAccount': (context) => const CreateAccountScreen(),
         '/friends': (context) => const FriendsScreen(),
+        '/conversation': (context) => const ConversationScreen(),
       },
     );
   }

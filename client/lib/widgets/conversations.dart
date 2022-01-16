@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:link/models/conversation.dart';
+import 'package:link/screens/conversation.dart';
 import 'package:link/state/db.dart';
 
 class Conversations extends ConsumerWidget {
@@ -17,7 +18,7 @@ class Conversations extends ConsumerWidget {
             itemBuilder: (context, i) {
               return Column(
                 children: [
-                  _buildRow(conversations[i]),
+                  _buildRow(context, conversations[i]),
                   if (i != conversations.length - 1) const Divider(),
                 ],
               );
@@ -32,14 +33,17 @@ class Conversations extends ConsumerWidget {
     );
   }
 
-  Widget _buildRow(Conversation conversation) {
+  Widget _buildRow(BuildContext context, Conversation conversation) {
     return InkWell(
       onTap: () {
+        Navigator.pushNamed(
+          context,
+          "/conversation",
+          arguments: ConversationArguments(conversation.id),
+        );
       },
-      onDoubleTap: () {
-      },
-      onLongPress: () {
-      },
+      onDoubleTap: () {},
+      onLongPress: () {},
       child: ListTile(
         leading: const CircleAvatar(child: Icon(Icons.person)),
         title: Text(

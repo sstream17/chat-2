@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../permissions.dart';
 import '../token_monitor.dart';
+import '../widgets/conversations.dart';
 import '../widgets/meta_card.dart';
 
 final _tokenProvider = StateProvider.autoDispose<String>((ref) => "");
@@ -74,7 +75,8 @@ class HomeScreen extends ConsumerWidget {
               Navigator.pushNamed(context, "/friends");
             },
             child: const Text("Friends"),
-          )
+          ),
+          const Expanded(child: Conversations())
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(

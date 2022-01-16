@@ -50,6 +50,7 @@ class Conversations extends ConsumerWidget {
           conversation.title,
           style: const TextStyle(fontSize: 18.0),
         ),
+        subtitle: const Text("Now"),
         trailing: IconButton(
           onPressed: () {},
           icon: const Icon(Icons.camera_alt_outlined),

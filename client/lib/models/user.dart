@@ -1,10 +1,10 @@
 class User {
-  String? id;
+  String? userId;
   String? email;
   String? username;
 
   User({
-    this.id,
+    this.userId,
     this.email,
     this.username,
   });

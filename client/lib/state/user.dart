@@ -60,7 +60,7 @@ class UserNotifier extends StateNotifier<link_user.User> {
 
       if (user != null) {
         state = link_user.User(
-          id: user.uid,
+          userId: user.uid,
           email: user.email,
           username: user.displayName,
         );

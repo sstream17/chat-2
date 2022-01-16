@@ -60,9 +60,10 @@ class _FriendsBody extends ConsumerWidget {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
+                TextButton.icon(
+                  label: const Text("Accept"),
                   onPressed: () {},
-                  icon: const Icon(Icons.person_add),
+                  icon: const Icon(Icons.check_circle),
                 ),
                 IconButton(
                   onPressed: () {},

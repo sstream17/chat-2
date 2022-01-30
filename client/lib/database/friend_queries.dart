@@ -9,4 +9,9 @@ class FriendQueries {
         ? results.map((json) => Friend.fromJson(json)).toList()
         : [];
   }
+
+  static Future<void> addFriend(Friend friend) async {
+    final db = await LinkDatabase.instance.database;
+    await db.insert(friendsTableName, friend.toJson());
+  }
 }

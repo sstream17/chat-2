@@ -9,22 +9,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:link/screens/screens.dart';
 
+import 'firebase_messaging_handler.dart';
 import 'firebase_options.dart';
-
-/// Define a top-level named handler which background/terminated messages will
-/// call.
-///
-/// To verify things are working, check out the native platform logs.
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  if (!kIsWeb) {
-    showNotification(message);
-  }
-  print('Handling a background message ${message.messageId}');
-}
 
 /// Create a [AndroidNotificationChannel] for heads up notifications
 late AndroidNotificationChannel channel = const AndroidNotificationChannel(
@@ -36,6 +22,20 @@ late AndroidNotificationChannel channel = const AndroidNotificationChannel(
 
 /// Initialize the [FlutterLocalNotificationsPlugin] package.
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
+
+/// Define a toplevel named handler which background/terminated messages will
+/// call.
+///
+/// To verify things are working, check out the native platform logs.
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await firebaseMessagingBackgroundHandler(message);
+
+  if (!kIsWeb) {
+    showNotification(message);
+  }
+
+  print('Handling a background message ${message.messageId}');
+}
 
 final _auth = FirebaseAuth.instance;
 
@@ -51,9 +51,10 @@ Future<void> main() async {
   // Set the background messaging handler early on, as a named top-level function
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
     if (!kIsWeb) {
-      showNotification(message);
+      await handleMessage(message);
+      await showNotification(message);
     }
   });
 
@@ -92,10 +93,8 @@ class Application extends StatelessWidget {
   }
 }
 
-void showNotification(RemoteMessage message) async {
+Future<void> showNotification(RemoteMessage message) async {
   await ensureFlutterLocalNotificationsPlugin();
-
-  print({channel.id, channel.name, channel.description});
 
   flutterLocalNotificationsPlugin!.show(
     Random().nextInt(99999),
